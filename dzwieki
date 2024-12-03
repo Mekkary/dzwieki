@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muzyczny Klawiszowiec</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        .kanały, .przyciski {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .nagrywanie {
+            background-color: red;
+            color: white;
+        }
+        .odtwarzanie {
+            background-color: green;
+            color: white;
+        }
+        .info {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Muzyczny Klawiszowiec</h1>
+    <p>Wciśnij klawisze `A`, `S`, `D`, `F` na klawiaturze, aby odtwarzać dźwięki.</p>
+
+    <div class="kanały">
+        <button id="kanał1-nagraj" class="nagrywanie">Nagrywaj Kanał 1</button>
+        <button id="kanał2-nagraj" class="nagrywanie">Nagrywaj Kanał 2</button>
+        <button id="kanał3-nagraj" class="nagrywanie">Nagrywaj Kanał 3</button>
+        <button id="kanał4-nagraj" class="nagrywanie">Nagrywaj Kanał 4</button>
+    </div>
+
+    <div class="przyciski">
+        <button id="odtwórz-wszystkie" class="odtwarzanie">Odtwórz Wszystkie Kanały</button>
+    </div>
+
+    <div class="info">
+        <p>Status: <span id="status">Gotowy</span></p>
+    </div>
+
+    <!-- Ścieżki do dźwięków z 99Sounds -->
+    <audio id="dźwięk-a" src="Whoosh - Trapped Firecracker.wav"></audio>
+    <audio id="dźwięk-s" src="Whoosh - Triple Threat.wav"></audio>
+    <audio id="dźwięk-d" src="Whoosh - Rusty UFO.wav"></audio>
+    <audio id="dźwięk-f" src="Whoosh - Nasty Transit.wav"></audio>
+
+    <script>
+        class Kanał {
+            constructor() {
+                this.nagrywanie = false;
+                this.zdarzenia = [];
+            }
+
+            nagrywaj(zdarzenie) {
+                if (this.nagrywanie) {
+                    this.zdarzenia.push({ klawisz: zdarzenie.key, czas: Date.now() });
+                }
+            }
+
+            odtwórz(startCzas) {
+                this.zdarzenia.forEach(zdarzenie => {
+                    setTimeout(() => {
+                        odtwórzDźwięk(zdarzenie.klawisz);
+                    }, zdarzenie.czas - startCzas);
+                });
+            }
+
+            rozpocznijNagrywanie() {
+                this.nagrywanie = true;
+                this.zdarzenia = [];
+                this.startCzas = Date.now();
+            }
+
+            zakończNagrywanie() {
+                this.nagrywanie = false;
+            }
+        }
+
+        const kanały = [new Kanał(), new Kanał(), new Kanał(), new Kanał()];
+        let status = document.getElementById('status');
+
+        function odtwórzDźwięk(klawisz) {
+            const audio = document.getElementById(`dźwięk-${klawisz}`);
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play();
+            }
+        }
+
+        function ustawStatus(tekst) {
+            status.textContent = tekst;
+        }
+
+        document.addEventListener('keydown', (zdarzenie) => {
+            odtwórzDźwięk(zdarzenie.key);
+            kanały.forEach(kanał => kanał.nagrywaj(zdarzenie));
+        });
+
+        kanały.forEach((kanał, indeks) => {
+            const przyciskNagrywania = document.getElementById(`kanał${indeks + 1}-nagraj`);
+            przyciskNagrywania.addEventListener('click', () => {
+                if (kanał.nagrywanie) {
+                    kanał.zakończNagrywanie();
+                    ustawStatus(`Kanał ${indeks + 1} zakończył nagrywanie.`);
+                    przyciskNagrywania.textContent = `Nagrywaj Kanał ${indeks + 1}`;
+                } else {
+                    kanał.rozpocznijNagrywanie();
+                    ustawStatus(`Kanał ${indeks + 1} nagrywa...`);
+                    przyciskNagrywania.textContent = `Zakończ Nagrywanie Kanału ${indeks + 1}`;
+                }
+            });
+        });
+
+        document.getElementById('odtwórz-wszystkie').addEventListener('click', () => {
+            ustawStatus('Odtwarzanie wszystkich kanałów...');
+            const startCzas = Date.now();
+            kanały.forEach(kanał => kanał.odtwórz(startCzas));
+        });
+    </script>
+</body>
+</html>
